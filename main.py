@@ -16,7 +16,7 @@ known_last_names = set(last_names_df["lastName"].dropna().str.strip().str.lower(
 
 def remove_salutation(text):
     words = text.strip().split()
-    if len(words) >= 2:
+    if len(words) > 2:
         return " ".join(words[1:])  # Remove the first word if 2 or more words
     return text.strip()
 
