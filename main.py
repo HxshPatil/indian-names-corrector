@@ -14,14 +14,12 @@ last_names_df = pd.read_csv("last_names.csv")
 known_first_names = set(first_names_df["firstName"].dropna().str.strip().str.lower())
 known_last_names = set(last_names_df["lastName"].dropna().str.strip().str.lower())
 
-# Common salutation words
-SALUTATIONS = {"mr", "mrs", "ms", "miss", "dr", "prof", "sir", "madam", "shri", "smt", "kumari"}
-
 def remove_salutation(text):
     words = text.strip().split()
-    if words and words[0].lower().rstrip(".") in SALUTATIONS:
-        return " ".join(words[1:])
-    return text
+    if len(words) >= 2:
+        return " ".join(words[1:])  # Remove the first word if 2 or more words
+    return text.strip()
+
 
 def correct_part(name_part, known_set):
     name_part = name_part.strip().lower()
