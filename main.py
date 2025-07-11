@@ -15,7 +15,7 @@ known_first_names = set(first_names_df["firstName"].dropna().str.strip().str.low
 known_last_names = set(last_names_df["lastName"].dropna().str.strip().str.lower())
 
 # Common salutation words
-SALUTATIONS = {"mr", "mr.", "mrs", "mrs.", "ms", "ms.", "miss", "dr", "dr.", "prof", "prof."}
+SALUTATIONS = {"mr", "mrs", "ms", "miss", "dr", "prof", "sir", "madam", "shri", "smt", "kumari"}
 
 def remove_salutation(text):
     words = text.strip().split()
@@ -25,10 +25,21 @@ def remove_salutation(text):
 
 def correct_part(name_part, known_set):
     name_part = name_part.strip().lower()
-    results = process.extract(name_part, known_set, scorer=Levenshtein.distance, limit=3)
-    for candidate, score, _ in results:
-        if score <= 2:
+
+    # Skip correction if single letter (like 'h')
+    if len(name_part) == 1:
+        return name_part
+
+    # Sort by Levenshtein distance
+    results = sorted(
+        [(candidate, Levenshtein.distance(name_part, candidate)) for candidate in known_set],
+        key=lambda x: x[1]
+    )
+
+    for candidate, score in results:
+        if score <= 5:
             return candidate
+
     return fallback_ai_correction(name_part)
 
 # SINGLE NAME TEXT INPUT MODE
@@ -46,7 +57,7 @@ def correct_single_name(full_name):
     corrected_first = correct_part(first, known_first_names) if first else ""
     corrected_last = correct_part(last, known_last_names) if last else ""
 
-    corrected_name = f"{corrected_first.capitalize()} {corrected_last.capitalize()}".strip()
+    corrected_name = f"{corrected_first} {corrected_last}".strip()
     return corrected_name
 
 # CSV UPLOAD MODE
@@ -73,7 +84,7 @@ def correct_csv(file_path):
         corrected_first = correct_part(cleaned_first, known_first_names) if cleaned_first else ""
         corrected_last = correct_part(original_last, known_last_names) if original_last else ""
 
-        corrected_full = f"{corrected_first} {corrected_last}".strip()
+        corrected_full = f"{corrected_first.capitalize()} {corrected_last.capitalize()}".strip()
         was_corrected = (
             corrected_first.lower() != cleaned_first.lower()
             or corrected_last.lower() != original_last.lower()
@@ -81,11 +92,10 @@ def correct_csv(file_path):
 
         output_rows.append({
             "Original First Name": original_first,
-            "Corrected First Name": corrected_first,
             "Original Last Name": original_last,
-            "Corrected Last Name": corrected_last,
-            "Corrected Name": corrected_full,
-            "Was Corrected": "Yes" if was_corrected else "No"
+            "Corrected First Name": corrected_first.capitalize(),
+            "Corrected Last Name": corrected_last.capitalize(),
+            "Corrected Name": corrected_full
         })
 
     output_df = pd.DataFrame(output_rows)
@@ -101,7 +111,7 @@ with gr.Blocks() as demo:
     gr.Markdown("## 🧠 Indian Name Corrector")
 
     with gr.Tab("Correct a Single Name"):
-        name_input = gr.Textbox(label="Enter Name (First Last)", placeholder="e.g. Mr. Ametabh Bacchan")
+        name_input = gr.Textbox(label="Enter Name (First Last)", placeholder="e.g. Hxrsh Patil")
         name_output = gr.Textbox(label="Corrected Name")
         gr.Button("Correct").click(correct_single_name, inputs=name_input, outputs=name_output)
 
