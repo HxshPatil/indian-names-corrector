@@ -18,7 +18,7 @@ A smart tool to correct Indian first and last names using fuzzy string matching 
 ### 1. Clone the repository
 
  ```bash
-git https://github.com/HxshPatil/indian-names-corrector.git
+git clone https://github.com/HxshPatil/indian-names-corrector.git
 cd indian-name-corrector 
 ```
 
